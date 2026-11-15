@@ -17,7 +17,7 @@ jupyter notebook notebooks/
 - `notebooks/` main notebook (one person edits it at a time). During development it imports code from `src/`; the final version contains all code in its own cells
 - `data/` generated event logs (CSV)
 - `figures/` plots and the event graph
-- `docs/` event log format and modelling assumptions
+- `docs/` event log format, model output and modelling assumptions
 - `unity/` 3D replay project
 
 ## Status
