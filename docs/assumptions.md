@@ -12,7 +12,14 @@ Decisions taken where the problem statement leaves a choice. Every analysis resu
 | Severity | low 0.5, medium 0.3, high 0.2 |
 | Treatment time | low N(15, 3), medium N(25, 5), high N(45, 8) min |
 
-Note: Python's `random.triangular` takes `(low, high, mode)`, so the call is `triangular(2, 6, 4)`.
+Note: libraries order the triangular parameters differently. Python `random.triangular` takes `(low, high, mode)`, NumPy `triangular` takes `(left, mode, right)`. Always pass them by name:
+
+```python
+random.triangular(low=2, high=6, mode=4)   # Python random
+rng.triangular(left=2, mode=4, right=6)    # NumPy
+```
+
+With Python `random` a wrong order does not raise an error; it silently produces a wrong distribution.
 
 ## Decisions
 
