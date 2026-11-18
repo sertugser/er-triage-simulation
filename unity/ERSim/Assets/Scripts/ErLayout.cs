@@ -36,10 +36,9 @@ namespace ERSim
         /// <summary>World-space labels drawn by the UI (anchor, text).</summary>
         public readonly List<KeyValuePair<Transform, string>> Labels = new List<KeyValuePair<Transform, string>>();
 
-        public Vector3 Center => new Vector3(-1.5f, 0f, -1f);   // left of the middle: the UI panel covers the left edge
+        public Vector3 Center => new Vector3(-2f, 0f, -1f);   // left of the middle: the UI panel covers the left edge
         public int RoomCount => rooms.Count;
 
-        static readonly Color Ground = new Color(0.38f, 0.55f, 0.36f);
         static readonly Color Floor = new Color(0.78f, 0.79f, 0.81f);
         static readonly Color WaitingFloor = new Color(0.62f, 0.73f, 0.86f);
         static readonly Color TriageFloor = new Color(0.88f, 0.79f, 0.58f);
@@ -112,14 +111,13 @@ namespace ERSim
 
         void Floors()
         {
-            Box("Ground", new Vector3(4f, -0.06f, 0f), new Vector3(90f, 0.1f, 50f), Ground);
             Box("Floor", new Vector3((West + East) / 2f, 0f, 0f), new Vector3(East - West, 0.04f, North - South), Floor);
             Box("WaitingFloor", new Vector3(-13.9f, 0.005f, 0f), new Vector3(11.6f, 0.04f, 13.4f), WaitingFloor);
             Box("TriageFloor", new Vector3(-5.5f, 0.005f, 0f), new Vector3(4.4f, 0.04f, 13.4f), TriageFloor);
             Box("RoomHallFloor", new Vector3(1.6f, 0.005f, 0f), new Vector3(8.6f, 0.04f, 13.4f), WaitingFloor);
             // paths outside the doors
-            Box("EntrancePath", new Vector3(West - 3f, -0.005f, 0f), new Vector3(6f, 0.04f, 3f), Floor);
-            Box("ExitPath", new Vector3(East + 3f, -0.005f, 0f), new Vector3(6f, 0.04f, 3f), Floor);
+            Box("EntrancePath", new Vector3(West - 1.75f, -0.005f, 0f), new Vector3(3.5f, 0.04f, 3f), Floor);
+            Box("ExitPath", new Vector3(East + 3.25f, -0.005f, 0f), new Vector3(6.5f, 0.04f, 3f), Floor);
         }
 
         void OuterWalls()
@@ -185,7 +183,7 @@ namespace ERSim
                 }
             }
 
-            Staff("female-e", new Vector3(-5.6f, 0f, 2.85f), 180f, parent, "Nurse");
+            Staff("female-d", StaffOutfit.Scrubs, new Vector3(-5.6f, 0f, 2.85f), 180f, parent, "Nurse");
             Label(new Vector3(-5.5f, 3.2f, North), "Triage");
         }
 
@@ -235,8 +233,12 @@ namespace ERSim
             Models.Furniture("chairCushion", c + new Vector3(1.55f, 0f, -s * 1.45f), far ? 0f : 180f, t);
             Models.Furniture("plantSmall1", c + new Vector3(-1.6f, 0f, s * 1.6f), 0f, t, 1.6f);
 
-            // one physician per room
-            Staff(index % 2 == 0 ? "male-e" : "female-d", c + new Vector3(-0.1f, 0f, s * 0.5f), 90f, t, null);
+            // one physician per room, in a white coat (male-d recoloured; female-e already wears one)
+            var beside = c + new Vector3(-0.1f, 0f, s * 0.5f);
+            if (index % 2 == 0)
+                Staff("male-d", StaffOutfit.WhiteCoat, beside, 90f, t, null);
+            else
+                Staff("female-e", null, beside, 90f, t, null);
 
             Label(c + new Vector3(0f, 3.2f, s * h), "Room " + number, t);
             return root;
@@ -277,13 +279,14 @@ namespace ERSim
             }
         }
 
-        void Staff(string variant, Vector3 pos, float yaw, Transform parent, string label)
+        void Staff(string variant, StaffOutfit.Rule[] outfit, Vector3 pos, float yaw, Transform parent, string label)
         {
             var root = new GameObject(label ?? "Physician");
             root.transform.SetParent(parent);
             root.transform.position = pos;
             root.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             var model = Models.Character(variant, root.transform);
+            if (outfit != null) StaffOutfit.Apply(model, variant, outfit);
             var anim = model.GetComponent<Animation>();
             if (anim != null && anim["idle"] != null) anim.Play("idle");
             Models.Primitive(PrimitiveType.Cylinder, "Marker", pos + new Vector3(0f, 0.035f, 0f), new Vector3(0.8f, 0.01f, 0.8f), StaffMarker, root.transform);

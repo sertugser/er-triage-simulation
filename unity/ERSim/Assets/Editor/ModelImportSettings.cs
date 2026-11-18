@@ -13,6 +13,9 @@ namespace ERSim.EditorTools
     {
         const string Root = "Assets/Resources/Models/";
 
+        // Raise when the settings below change, so Unity reimports the models
+        public override uint GetVersion() => 2;
+
         void OnPreprocessModel()
         {
             if (!assetPath.StartsWith(Root)) return;
@@ -27,6 +30,7 @@ namespace ERSim.EditorTools
                 importer.animationType = ModelImporterAnimationType.Legacy;
                 importer.importAnimation = true;
                 importer.animationWrapMode = WrapMode.Loop;
+                importer.isReadable = true;   // StaffOutfit recolours the body mesh at runtime
             }
             else
             {

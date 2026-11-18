@@ -38,6 +38,10 @@ namespace ERSim
             return Place("Props/" + name, name, pos, yaw, parent, CharacterScale * scale);
         }
 
+        /// <summary>Places any model under Resources/Models by the bottom centre of its bounds.</summary>
+        public static GameObject Place(string path, Vector3 pos, float yaw, Transform parent, float scale) =>
+            Place(path, path.Substring(path.LastIndexOf('/') + 1), pos, yaw, parent, scale);
+
         static GameObject Place(string path, string name, Vector3 pos, float yaw, Transform parent, float scale)
         {
             var root = new GameObject(name);

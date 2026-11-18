@@ -32,7 +32,7 @@ namespace ERSim
         int speed = 1;
         GUIStyle box, title, label, small, worldLabel;
         Texture2D swatch;
-        const float PanelWidth = 300f, PanelHeight = 580f;
+        const float PanelWidth = 300f, PanelHeight = 600f;
         Vector2 scroll;
 
         void Start()
@@ -129,7 +129,7 @@ namespace ERSim
             Legend(ReplayController.MediumColor, "medium");
             Legend(ReplayController.HighColor, "high");
             GUILayout.EndHorizontal();
-            GUILayout.Label("Drag: rotate   Wheel: zoom", small);
+            GUILayout.Label("Left drag: rotate   Right drag: move   Wheel: zoom", small);
 
             GUILayout.EndScrollView();
             GUILayout.EndArea();
@@ -156,7 +156,13 @@ namespace ERSim
                 var sp = Cam.WorldToScreenPoint(t.position);
                 if (sp.z <= 0) continue;
                 var gp = new Vector2(sp.x, Screen.height - sp.y) / scale;
-                GUI.Label(new Rect(gp.x - 110, gp.y - 10, 220, 20), kv.Value, worldLabel);
+                var size = worldLabel.CalcSize(new GUIContent(kv.Value));
+                var plate = new Rect(gp.x - size.x / 2f - 6f, gp.y - 11f, size.x + 12f, 22f);
+                var old = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, 0.72f);
+                GUI.DrawTexture(plate, swatch);
+                GUI.color = old;
+                GUI.Label(plate, kv.Value, worldLabel);
             }
         }
     }

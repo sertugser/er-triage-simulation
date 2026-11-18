@@ -97,8 +97,9 @@ namespace ERSim
                 }
             }
 
-            // Walking speeds up with the playback speed so patients keep up with the log
-            Patient.MoveRate = Mathf.Max(3.5f, Speed * 0.5f);
+            // Normal walking pace at 1x; faster playback fast-forwards the walk so
+            // patients still reach their place before the log moves them on
+            Patient.MoveRate = Mathf.Max(Patient.WalkingPace, Speed * 0.5f);
         }
 
         /// <summary>Applies every row up to <paramref name="time"/>.</summary>

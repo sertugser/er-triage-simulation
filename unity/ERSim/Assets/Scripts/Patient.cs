@@ -10,7 +10,8 @@ namespace ERSim
     /// </summary>
     public class Patient : MonoBehaviour
     {
-        public static float MoveRate = 3.5f;   // metres per real second
+        public const float WalkingPace = 1.8f;          // pace the walk animation suits
+        public static float MoveRate = WalkingPace;     // metres per real second
         const float TurnRate = 720f;           // degrees per real second
 
         readonly Queue<Vector3> path = new Queue<Vector3>();
@@ -22,7 +23,7 @@ namespace ERSim
 
         // Variants used for patients; the others are staff
         static readonly string[] Variants =
-            { "female-a", "male-a", "female-b", "male-b", "female-c", "male-d" };
+            { "female-a", "male-a", "female-b", "male-b", "female-c", "male-e" };
 
         public static Patient Create(int id, Color severity, Vector3 position, Transform parent)
         {
@@ -102,6 +103,9 @@ namespace ERSim
             if (path.Count > 0)
             {
                 Play("walk");
+                // fast playback is a fast-forward: the steps speed up with the movement
+                if (anim != null && anim["walk"] != null)
+                    anim["walk"].speed = Mathf.Clamp(MoveRate / WalkingPace, 1f, 8f);
             }
             else
             {

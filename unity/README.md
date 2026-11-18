@@ -13,7 +13,8 @@ nurse state and busy rooms on screen are the `time`, `triage_queue`, `room_queue
 3. Open `Assets/Scenes/Main.unity` and press Play.
 
 The scene file is empty. Everything is created from code when the scene loads
-(`Assets/Scripts/Bootstrap.cs`): the building, furniture, staff, camera, lights and UI.
+(`Assets/Scripts/Bootstrap.cs`): the building, furniture, staff, surroundings, sky, camera,
+lights and UI.
 
 ## Event logs
 
@@ -26,13 +27,15 @@ or the menu **ERSim > Sync event logs from data**). The copies are not committed
 | Control | Action |
 | --- | --- |
 | Play / Pause, Restart | Playback |
-| 1x / 10x / 60x | Speed; 1x is one simulated minute per second |
+| 1x / 10x / 60x | Speed; 1x is one simulated minute per second. Patients walk at a normal pace at 1x; faster speeds fast-forward the walk |
 | Scenario buttons | Base, A, B, C, D from `docs/assumptions.md`; rooms 4 / 6 / 8 are shown accordingly |
-| Drag | Orbit the camera |
+| Left drag | Orbit the camera |
+| Right or middle drag | Move the camera over the ground |
 | Mouse wheel | Zoom |
 
 Patients are coloured by severity through the disc under their feet and the marker above
-their head: green = low, yellow = medium, red = high. Staff have a blue disc.
+their head: green = low, yellow = medium, red = high. Staff have a blue disc; the nurse
+wears light blue scrubs and the physicians white coats.
 Walls between the camera and the inside of the building are hidden automatically.
 
 ## Build
@@ -49,7 +52,7 @@ Screenshots for the report can be taken from the command line; each entry is
 `file,sim time,scenario index,yaw,pitch,distance,target x,target z`:
 
 ```
-ERSim.exe -shots "overview.png,300,0,0,48,50,-1.5,-1|room.png,300,0,25,35,11,13.6,4"
+ERSim.exe -shots "overview.png,300,0,0,44,47,-2,-1|room.png,300,0,25,35,11,13.6,4"
 ```
 
 ## Code
@@ -61,11 +64,13 @@ ERSim.exe -shots "overview.png,300,0,0,48,50,-1.5,-1|room.png,300,0,25,35,11,13.
 | `Scripts/Patient.cs` | A character that walks along waypoints, idles and sits on the bed |
 | `Scripts/ErLayout.cs` | Building, rooms, queue positions (empty objects), routes |
 | `Scripts/Models.cs` | Loads and places the models; wall cutaway |
+| `Scripts/StaffOutfit.cs` | Scrubs and white coats: moves body triangles to other palette colours |
+| `Scripts/Surroundings.cs` | Lawn, pavement, car park, ambulances, road, trees (decoration only) |
 | `Scripts/ReplayUI.cs`, `Scripts/OrbitCamera.cs` | On-screen panel and camera |
-| `Editor/ProjectSetup.cs` | Visible Meta Files, Force Text, main scene, build settings |
+| `Editor/ProjectSetup.cs` | Visible Meta Files, Force Text, main scene, sky material, build settings |
 | `Editor/ModelImportSettings.cs` | Import settings of the models |
 
 ## Third-party assets
 
 Models in `ERSim/Assets/Resources/Models` are from [Kenney](https://kenney.nl)
-(Mini Characters, Furniture Kit), licensed CC0. The licence files are next to the models.
+(Mini Characters, Furniture Kit, Car Kit, Nature Kit), licensed CC0. The licence files are next to the models.

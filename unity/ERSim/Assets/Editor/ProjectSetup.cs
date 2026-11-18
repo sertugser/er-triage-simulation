@@ -11,6 +11,7 @@ namespace ERSim.EditorTools
     public static class ProjectSetup
     {
         public const string ScenePath = "Assets/Scenes/Main.unity";
+        public const string SkyPath = "Assets/Resources/Sky.mat";
 
         [MenuItem("ERSim/Apply project setup")]
         public static void Run()
@@ -34,12 +35,24 @@ namespace ERSim.EditorTools
             }
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
 
+            // Sky material as an asset, so the skybox shader is included in builds
+            if (AssetDatabase.LoadAssetAtPath<UnityEngine.Material>(SkyPath) == null)
+            {
+                var sky = new UnityEngine.Material(UnityEngine.Shader.Find("Skybox/Procedural"));
+                sky.SetFloat("_SunSize", 0.035f);
+                sky.SetFloat("_AtmosphereThickness", 0.9f);
+                sky.SetColor("_SkyTint", new UnityEngine.Color(0.45f, 0.55f, 0.70f));
+                sky.SetColor("_GroundColor", new UnityEngine.Color(0.36f, 0.56f, 0.30f));
+                sky.SetFloat("_Exposure", 1.2f);
+                AssetDatabase.CreateAsset(sky, SkyPath);
+            }
+
             AssetDatabase.SaveAssets();
             UnityEngine.Debug.Log("ERSim: project setup applied");
         }
     }
 
-    /// <summary>Applies the setup the first time the project is opened (no scene yet).</summary>
+    /// <summary>Applies the setup when the project is opened and the scene or sky asset is missing.</summary>
     [InitializeOnLoad]
     static class ProjectSetupOnFirstOpen
     {
@@ -47,9 +60,11 @@ namespace ERSim.EditorTools
         {
             EditorApplication.delayCall += () =>
             {
-                if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSetup.ScenePath) != null) return;
+                bool hasScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(ProjectSetup.ScenePath) != null;
+                bool hasSky = AssetDatabase.LoadAssetAtPath<UnityEngine.Material>(ProjectSetup.SkyPath) != null;
+                if (hasScene && hasSky) return;
                 ProjectSetup.Run();
-                EditorSceneManager.OpenScene(ProjectSetup.ScenePath);
+                if (!hasScene) EditorSceneManager.OpenScene(ProjectSetup.ScenePath);
             };
         }
     }
