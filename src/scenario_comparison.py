@@ -9,11 +9,31 @@ from typing import Mapping
 import pandas as pd
 
 if __package__:
-    from .er_model import RUN_LENGTH, SCENARIOS, run_simulation
+    from .er_model import (
+        RUN_LENGTH,
+        SCENARIOS,
+        SEVERITIES,
+        SEVERITY_PROBS,
+        TREATMENT_PARAMS,
+        TRIAGE_LEFT,
+        TRIAGE_MODE,
+        TRIAGE_RIGHT,
+        run_simulation,
+    )
     from .performance_metrics import PerformanceMetrics, compute_performance_metrics
     from .queue_delay_analysis import confidence_interval
 else:  # Support notebooks that add ``src`` directly to ``sys.path``.
-    from er_model import RUN_LENGTH, SCENARIOS, run_simulation
+    from er_model import (
+        RUN_LENGTH,
+        SCENARIOS,
+        SEVERITIES,
+        SEVERITY_PROBS,
+        TREATMENT_PARAMS,
+        TRIAGE_LEFT,
+        TRIAGE_MODE,
+        TRIAGE_RIGHT,
+        run_simulation,
+    )
     from performance_metrics import PerformanceMetrics, compute_performance_metrics
     from queue_delay_analysis import confidence_interval
 
@@ -23,6 +43,11 @@ _DEFAULT_N_STAR_PATH = (
     Path(__file__).resolve().parent.parent
     / "data"
     / "queue_delay_confidence_intervals.csv"
+)
+_MEAN_TRIAGE_TIME = (TRIAGE_LEFT + TRIAGE_MODE + TRIAGE_RIGHT) / 3
+_MEAN_TREATMENT_TIME = sum(
+    probability * TREATMENT_PARAMS[severity][0]
+    for severity, probability in zip(SEVERITIES, SEVERITY_PROBS)
 )
 
 
@@ -78,6 +103,8 @@ def compare_scenarios(
 
     for scenario, (n_rooms, mean_interarrival) in scenario_map.items():
         n_star = n_star_values[scenario]
+        nurse_rho = _MEAN_TRIAGE_TIME / mean_interarrival
+        rooms_rho = _MEAN_TREATMENT_TIME / (mean_interarrival * n_rooms)
         replications: list[dict[str, float | int | None]] = []
         for seed in range(1, n_star + 1):
             result = run_simulation(
@@ -95,6 +122,11 @@ def compare_scenarios(
             "mean_interarrival": mean_interarrival,
             "run_length": float(run_length),
             "n_star": n_star,
+            "nurse_rho": nurse_rho,
+            "rooms_rho": rooms_rho,
+            "system_stability": (
+                "stable" if nurse_rho < 1 and rooms_rho < 1 else "not stable"
+            ),
         }
         row.update(metrics.mean(numeric_only=True).to_dict())
 
