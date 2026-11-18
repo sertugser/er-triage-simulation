@@ -43,16 +43,16 @@ namespace ERSim
             cam.backgroundColor = new Color(0.72f, 0.83f, 0.93f);
             cam.fieldOfView = 45f;
             cam.farClipPlane = 300f;
-            var view = Quaternion.Euler(48f, 0f, 0f);
-            cam.transform.rotation = view;
-            cam.transform.position = layout.Center + view * new Vector3(0f, 0f, -50f);
+            cam.gameObject.AddComponent<OrbitCamera>().Target = layout.Center;
             QualitySettings.shadowDistance = 120f;
 
             var replay = new GameObject("Replay").AddComponent<ReplayController>();
             replay.Layout = layout;
 
-            replay.Load(6, 3);   // base scenario until the UI can choose
-            replay.Playing = true;
+            var ui = replay.gameObject.AddComponent<ReplayUI>();
+            ui.Replay = replay;
+            ui.Layout = layout;
+            ui.Cam = cam;
         }
     }
 }
