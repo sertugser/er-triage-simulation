@@ -31,6 +31,9 @@ python src/event_graph.py                 # figures/event_graph.dot + .png (need
 
 Model validation against queueing theory: `notebooks/m1_model_validation.ipynb`.
 
+Replication-based queue-delay confidence intervals: `notebooks/queue_delay_confidence_intervals.ipynb`.
+The reproducible result table is saved to `data/queue_delay_confidence_intervals.csv`.
+
 ## Repository layout
 
 - `src/` simulation model and analysis code
