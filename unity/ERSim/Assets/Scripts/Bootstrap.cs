@@ -53,6 +53,8 @@ namespace ERSim
             ui.Replay = replay;
             ui.Layout = layout;
             ui.Cam = cam;
+
+            replay.gameObject.AddComponent<Capture>().Init(replay, ui, cam.GetComponent<OrbitCamera>());
         }
     }
 }
