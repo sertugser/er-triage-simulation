@@ -47,6 +47,12 @@ namespace ERSim
             cam.transform.rotation = view;
             cam.transform.position = layout.Center + view * new Vector3(0f, 0f, -50f);
             QualitySettings.shadowDistance = 120f;
+
+            var replay = new GameObject("Replay").AddComponent<ReplayController>();
+            replay.Layout = layout;
+
+            replay.Load(6, 3);   // base scenario until the UI can choose
+            replay.Playing = true;
         }
     }
 }
