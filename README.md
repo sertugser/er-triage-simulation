@@ -34,6 +34,9 @@ Model validation against queueing theory: `notebooks/m1_model_validation.ipynb`.
 Replication-based queue-delay confidence intervals: `notebooks/queue_delay_confidence_intervals.ipynb`.
 The reproducible result table is saved to `data/queue_delay_confidence_intervals.csv`.
 
+Scenario comparison at each scenario's required replication count: `notebooks/scenario_comparison.ipynb`.
+The comparison table is saved to `data/scenario_comparison.csv`.
+
 ## Repository layout
 
 - `src/` simulation model and analysis code
