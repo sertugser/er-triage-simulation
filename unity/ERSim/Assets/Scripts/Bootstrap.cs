@@ -9,6 +9,7 @@ namespace ERSim
         static void Init()
         {
             if (Object.FindAnyObjectByType<ErLayout>() != null) return;
+            Application.runInBackground = true;   // keep playing when the window loses focus
 
             // sky: procedural skybox (Resources/Sky.mat, made by ProjectSetup) lit by the sun
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;

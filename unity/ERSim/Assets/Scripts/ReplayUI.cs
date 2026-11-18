@@ -25,14 +25,15 @@ namespace ERSim
             new Scenario("C", 4, 3),
             new Scenario("D", 8, 3),
         };
-        static readonly float[] Speeds = { 1f, 10f, 60f };
-        static readonly string[] SpeedLabels = { "1x", "10x", "60x" };
+        // Multiples of real time, stored as simulated minutes per real second
+        static readonly float[] Speeds = { 1f / 60f, 10f / 60f, 1f, 10f };
+        static readonly string[] SpeedLabels = { "1x", "10x", "60x", "600x" };
 
         int scenario;
         int speed = 1;
         GUIStyle box, title, label, small, worldLabel;
         Texture2D swatch;
-        const float PanelWidth = 300f, PanelHeight = 600f;
+        const float PanelWidth = 300f, PanelHeight = 620f;
         Vector2 scroll;
 
         void Start()
@@ -86,8 +87,9 @@ namespace ERSim
             GUILayout.Label(Scenarios[scenario].Label, small);
             GUILayout.Space(6);
 
-            int minutes = Mathf.FloorToInt(Replay.SimTime);
-            GUILayout.Label($"Clock  {minutes / 60:00}:{minutes % 60:00}   (t = {Replay.SimTime:0.0} / {Replay.RunLength:0} min)", label);
+            int seconds = Mathf.FloorToInt(Replay.SimTime * 60f);
+            GUILayout.Label($"Clock  {seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}", label);
+            GUILayout.Label($"t = {Replay.SimTime:0.00} / {Replay.RunLength:0} min", small);
             GUILayout.Label($"Triage queue   {s.TriageQueue}", label);
             GUILayout.Label($"Nurse          {(s.NurseBusy == 1 ? "busy" : "idle")}", label);
             GUILayout.Label($"Room queue     {s.RoomQueue}", label);
@@ -106,7 +108,7 @@ namespace ERSim
                 Replay.Restart();
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("Speed (1x = 1 simulated min per second)", small);
+            GUILayout.Label("Speed (1x = real time, 60x = 1 min per second)", small);
             int newSpeed = GUILayout.Toolbar(speed, SpeedLabels, GUILayout.Height(26));
             if (newSpeed != speed) { speed = newSpeed; Replay.Speed = Speeds[speed]; }
             GUILayout.Space(6);
@@ -158,6 +160,7 @@ namespace ERSim
                 var gp = new Vector2(sp.x, Screen.height - sp.y) / scale;
                 var size = worldLabel.CalcSize(new GUIContent(kv.Value));
                 var plate = new Rect(gp.x - size.x / 2f - 6f, gp.y - 11f, size.x + 12f, 22f);
+                if (plate.xMin < 10f + PanelWidth + 4f && plate.yMin < 10f + PanelHeight) continue;   // under the panel
                 var old = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, 0.72f);
                 GUI.DrawTexture(plate, swatch);

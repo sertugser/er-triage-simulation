@@ -27,7 +27,7 @@ or the menu **ERSim > Sync event logs from data**). The copies are not committed
 | Control | Action |
 | --- | --- |
 | Play / Pause, Restart | Playback |
-| 1x / 10x / 60x | Speed; 1x is one simulated minute per second. Patients walk at a normal pace at 1x; faster speeds fast-forward the walk |
+| 1x / 10x / 60x / 600x | Speed as a multiple of real time (60x = one simulated minute per second; 600x plays the day in 2.4 minutes). Patients walk at 1.8 m/s in simulated time, so faster speeds fast-forward the walk |
 | Scenario buttons | Base, A, B, C, D from `docs/assumptions.md`; rooms 4 / 6 / 8 are shown accordingly |
 | Left drag | Orbit the camera |
 | Right or middle drag | Move the camera over the ground |

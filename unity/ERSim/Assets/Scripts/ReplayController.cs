@@ -21,7 +21,7 @@ namespace ERSim
         public float SimTime { get; private set; }
         public float RunLength { get; private set; }
         public bool Playing { get; set; }
-        public float Speed { get; set; } = 10f;   // simulated minutes per real second
+        public float Speed { get; set; } = 1f / 6f;   // simulated minutes per real second (1/60 = real time)
         public bool Finished { get; private set; }
 
         // Last applied row (state columns straight from the CSV)
@@ -58,6 +58,7 @@ namespace ERSim
                 return false;
             }
             Error = null;
+            mismatchReported = false;
             RunLength = events.Count > 0 ? events[events.Count - 1].Time : 0f;
             Debug.Log($"Loaded {events.Count} events from {path}");
             return true;
@@ -97,9 +98,9 @@ namespace ERSim
                 }
             }
 
-            // Normal walking pace at 1x; faster playback fast-forwards the walk so
-            // patients still reach their place before the log moves them on
-            Patient.MoveRate = Mathf.Max(Patient.WalkingPace, Speed * 0.5f);
+            // Patients walk at a fixed pace in simulated time, so they always reach
+            // their place long before the log moves them on, at any playback speed
+            Patient.TimeScale = Playing ? Speed * 60f : 0f;
         }
 
         /// <summary>Applies every row up to <paramref name="time"/>.</summary>
@@ -112,7 +113,11 @@ namespace ERSim
                 Apply(events[next++]);
                 changed = true;
             }
-            if (changed) UpdateQueueTargets();
+            if (changed)
+            {
+                UpdateQueueTargets();
+                CheckAgainstLog();
+            }
             if (next >= events.Count)
             {
                 SimTime = RunLength;
@@ -120,6 +125,22 @@ namespace ERSim
                 Playing = false;
             }
         }
+
+        /// <summary>
+        /// The counters on screen come from the log. This only warns when the people
+        /// standing in the queues do not add up to those columns, which would mean the
+        /// log's events and state columns disagree.
+        /// </summary>
+        void CheckAgainstLog()
+        {
+            if (mismatchReported) return;
+            if (triageQueue.Count == State.TriageQueue && roomQueue.Count == State.RoomQueue) return;
+            mismatchReported = true;
+            Debug.LogWarning($"ERSim: {LoadedFile} at t={State.Time}: the scene has {triageQueue.Count} / {roomQueue.Count} " +
+                             $"patients in the triage / room queue, the log says {State.TriageQueue} / {State.RoomQueue}");
+        }
+
+        bool mismatchReported;
 
         /// <summary>Jumps to a time: replays the rows from the start and places everyone directly.</summary>
         public void Seek(float time)
@@ -175,6 +196,7 @@ namespace ERSim
         Patient Spawn(LogEvent e)
         {
             var p = Patient.Create(e.PatientId, ColorOf(e.Severity), Layout.SpawnPoint, transform);
+            p.Follow(Layout.PathIn(), ErLayout.QueueFacing, false);   // through the entrance door
             patients[e.PatientId] = p;
             return p;
         }

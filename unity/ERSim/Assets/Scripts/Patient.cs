@@ -7,16 +7,32 @@ namespace ERSim
     /// A patient: a rigged character that walks along waypoints, idles in queues
     /// and sits on the bed. Severity is shown by the disc under the feet and the
     /// marker above the head.
+    ///
+    /// Movement is a list of legs. A route leg (through a door) is always walked to
+    /// its end, so nobody cuts through a wall when the log moves them on early; a
+    /// free leg (a place in an open hall) can be retargeted at any time.
     /// </summary>
     public class Patient : MonoBehaviour
     {
-        public const float WalkingPace = 1.8f;          // pace the walk animation suits
-        public static float MoveRate = WalkingPace;     // metres per real second
-        const float TurnRate = 720f;           // degrees per real second
+        /// <summary>Walking speed in metres per simulated second.</summary>
+        public const float WalkingPace = 1.8f;
 
-        readonly Queue<Vector3> path = new Queue<Vector3>();
-        Vector3 destination;
-        float restYaw;
+        /// <summary>Simulated seconds per real second, set by the replay each frame.</summary>
+        public static float TimeScale = 1f;
+
+        const float TurnRate = 540f;   // degrees per simulated second
+
+        class Leg
+        {
+            public readonly List<Vector3> Points = new List<Vector3>();
+            public int Next;        // index of the point being walked to
+            public float Yaw;       // facing when the leg is finished
+            public bool Sit;
+            public bool Route;      // must be completed
+        }
+
+        readonly List<Leg> legs = new List<Leg>();
+        float restYaw = 90f;
         bool sitAtRest;
         Animation anim;
         string playing;
@@ -32,8 +48,6 @@ namespace ERSim
             go.transform.position = position;
             go.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
             var p = go.AddComponent<Patient>();
-            p.destination = position;
-            p.restYaw = 90f;
 
             var model = Models.Character(Variants[(id * 7 + id / 7) % Variants.Length], go.transform);
             p.anim = model.GetComponent<Animation>();
@@ -45,44 +59,59 @@ namespace ERSim
             return p;
         }
 
-        /// <summary>Walk straight to one point, then stand facing the given yaw.</summary>
+        /// <summary>Walk straight to a place in an open hall, then stand facing the given yaw.</summary>
         public void GoTo(Vector3 target, float yaw)
         {
-            restYaw = yaw;
-            sitAtRest = false;
-            if (path.Count == 0 && target == destination) return;
-            if (path.Count == 1 && path.Peek() == target) return;
-            path.Clear();
-            path.Enqueue(target);
-            destination = target;
+            Leg leg = legs.Count > 0 && !legs[legs.Count - 1].Route ? legs[legs.Count - 1] : null;
+            if (leg == null)
+            {
+                if (legs.Count == 0 && !sitAtRest && (transform.position - target).sqrMagnitude < 1e-6f)
+                {
+                    restYaw = yaw;
+                    return;
+                }
+                leg = new Leg();
+                legs.Add(leg);
+            }
+            leg.Points.Clear();
+            leg.Points.Add(target);
+            leg.Next = 0;
+            leg.Yaw = yaw;
         }
 
-        /// <summary>Walk through all points; optionally sit at the last one.</summary>
+        /// <summary>Walk through all points (a route through a door); optionally sit at the last one.</summary>
         public void Follow(List<Vector3> points, float yaw, bool sit)
         {
-            path.Clear();
-            foreach (var p in points) path.Enqueue(p);
-            destination = points[points.Count - 1];
-            restYaw = yaw;
-            sitAtRest = sit;
+            // a place in a hall that was not reached yet is given up; routes are kept
+            if (legs.Count > 0 && !legs[legs.Count - 1].Route) legs.RemoveAt(legs.Count - 1);
+            var leg = new Leg { Yaw = yaw, Sit = sit, Route = true };
+            leg.Points.AddRange(points);
+            legs.Add(leg);
         }
 
-        public bool Arrived => path.Count == 0;
+        public bool Arrived => legs.Count == 0;
 
-        /// <summary>Jump to the end of the current route (used when seeking).</summary>
+        /// <summary>Jump to the end of everything planned (used when seeking).</summary>
         public void Snap()
         {
-            path.Clear();
-            transform.position = destination;
+            if (legs.Count > 0)
+            {
+                var last = legs[legs.Count - 1];
+                transform.position = last.Points[last.Points.Count - 1];
+                restYaw = last.Yaw;
+                sitAtRest = last.Sit;
+                legs.Clear();
+            }
             transform.rotation = Quaternion.Euler(0f, restYaw, 0f);
         }
 
         void Update()
         {
-            float step = MoveRate * Time.deltaTime;
-            while (path.Count > 0 && step > 0f)
+            float step = WalkingPace * TimeScale * Time.deltaTime;
+            while (legs.Count > 0 && step > 0f)
             {
-                var next = path.Peek();
+                var leg = legs[0];
+                var next = leg.Points[leg.Next];
                 var delta = next - transform.position;
                 float dist = delta.magnitude;
                 var flat = new Vector3(delta.x, 0f, delta.z);
@@ -91,7 +120,12 @@ namespace ERSim
                 {
                     transform.position = next;
                     step -= dist;
-                    path.Dequeue();
+                    if (++leg.Next >= leg.Points.Count)
+                    {
+                        restYaw = leg.Yaw;
+                        sitAtRest = leg.Sit;
+                        legs.RemoveAt(0);
+                    }
                 }
                 else
                 {
@@ -100,12 +134,12 @@ namespace ERSim
                 }
             }
 
-            if (path.Count > 0)
+            if (legs.Count > 0)
             {
                 Play("walk");
-                // fast playback is a fast-forward: the steps speed up with the movement
+                // fast playback is a fast-forward of the same walk
                 if (anim != null && anim["walk"] != null)
-                    anim["walk"].speed = Mathf.Clamp(MoveRate / WalkingPace, 1f, 8f);
+                    anim["walk"].speed = Mathf.Clamp(TimeScale, 1f, 6f);
             }
             else
             {
@@ -115,7 +149,8 @@ namespace ERSim
         }
 
         void Face(Quaternion target) =>
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, target, TurnRate * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, target,
+                TurnRate * Mathf.Max(1f, TimeScale) * Time.deltaTime);
 
         void Play(string clip)
         {

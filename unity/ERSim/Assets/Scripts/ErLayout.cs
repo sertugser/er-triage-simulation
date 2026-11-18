@@ -77,6 +77,9 @@ namespace ERSim
             return new Vector3(c.x + 1.1f, SeatHeight, c.z + Side(room) * 1.15f);
         }
 
+        /// <summary>From outside through the entrance door.</summary>
+        public List<Vector3> PathIn() => new List<Vector3> { new Vector3(West + 1.2f, 0f, 0f) };
+
         /// <summary>Corridor -> door -> bed.</summary>
         public List<Vector3> PathToRoom(int room)
         {
